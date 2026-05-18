@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Milano Pizza - Verwaltung</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1fr 350px;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    @media (max-width: 1024px) {
+      .main-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    header {
+      background: linear-gradient(135deg, #1a0f2e 0%, #2d1b4e 100%);
+      color: white;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      border-radius: 10px;
+    }
+
+    h1 {
+      background: linear-gradient(135deg, #ff006e 0%, #8338ec 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .admin-panel {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .card h2 {
+      background: linear-gradient(135deg, #ff006e 0%, #8338ec 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1rem;
+      font-size: 1.5rem;
+    }
+
+    .stat {
+      font-size: 2.5rem;
+      background: linear-gradient(135deg, #ff006e 0%, #8338ec 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: bold;
+    }
+
+    .orders-section {
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .orders-section h2 {
+      color: #1a1a1a;
+      margin-bottom: 1.5rem;
+      font-size: 1.8rem;
+    }
+
+    .orders-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 2rem;
+    }
+
+    .orders-table th {
+      background: linear-gradient(135deg, #1a0f2e 0%, #2d1b4e 100%);
+      color: white;
+      padding: 1rem;
+      text-align: left;
+    }
+
+    .orders-table td {
+      padding: 1rem;
+      border-bottom: 1px solid #eee;
+    }
+
+    .orders-table tr:hover {
+      background: #f9f9f9;
+    }
+
+    .status {
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      color: white;
+    }
+
+    .status.neu {
+      background: linear-gradient(135deg, #ff006e 0%, #8338ec 100%);
+    }
+
+    .status.in-progress {
+      background: #ffbe0b;
+      color: #1a0f2e;
+    }
+
+    .status.delivered {
+      background: #28a745;
+    }
+
+    button {
+      background: linear-gradient(135deg, #ff006e 0%, #8338ec 100%);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      margin: 0 2px;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(255, 0, 110, 0.4);
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .action-buttons button {
+      font-size: 0.85rem;
+      padding: 0.3rem 0.6rem;
+    }
+
+    .refresh-btn {
+      margin-bottom: 1rem;
+    }
+
+    .no-orders {
+      text-align: center;
+      padding: 2rem;
+      color: #999;
+    }
+
+    .order-detail {
+      background: #f9f9f9;
+      padding: 1rem;
+      border-radius: 5px;
+      margin-top: 1rem;
+    }
+
+    .order-detail h4 {
+      margin-bottom: 0.5rem;
+      color: #1a1a1a;
+    }
+
+    .order-detail p {
+      font-size: 0.9rem;
+      margin: 0.25rem 0;
+      color: #666;
+    }
+
+    .items-list {
+      background: white;
+      padding: 0.5rem;
+      border-radius: 3px;
+      margin-top: 0.5rem;
+    }
+
+    .item {
+      padding: 0.5rem;
+      border-bottom: 1px solid #eee;
+      font-size: 0.9rem;
+    }
+
+    .item:last-child {
+      border-bottom: none;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+
+      .admin-panel {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .card h2 {
+        font-size: 1.2rem;
+      }
+
+      .stat {
+        font-size: 2rem;
+      }
+
+      header {
+        padding: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      h1 {
+        font-size: 1.3rem;
+      }
+
+      .main-layout {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .orders-section {
+        padding: 1rem;
+      }
+
+      .orders-section h2 {
+        font-size: 1.3rem;
+        margin-bottom: 1rem;
+      }
+
+      .orders-table {
+        font-size: 0.85rem;
+      }
+
+      .orders-table th,
+      .orders-table td {
+        padding: 0.6rem 0.3rem;
+      }
+
+      .action-buttons {
+        flex-direction: column;
+        gap: 3px;
+      }
+
+      .action-buttons button {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.4rem;
+        width: 100%;
+      }
+
+      .sales-section {
+        position: static;
+        max-height: none;
+        padding: 1rem;
+      }
+
+      .sales-table {
+        font-size: 0.85rem;
+      }
+
+      .sales-table th,
+      .sales-table td {
+        padding: 0.5rem 0.3rem;
+      }
+
+      .products-section {
+        padding: 1rem;
+      }
+
+      .products-section h2 {
+        font-size: 1.3rem;
+        margin-bottom: 1rem;
+      }
+
+      .search-input {
+        padding: 0.6rem;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+      }
+
+      .products-table {
+        font-size: 0.85rem;
+      }
+
+      .products-table th,
+      .products-table td {
+        padding: 0.7rem 0.4rem;
+      }
+
+      .products-table th:nth-child(2),
+      .products-table td:nth-child(2) {
+        text-align: center;
+      }
+
+      .product-status-btn {
+        padding: 0.5rem 0.8rem;
+        font-size: 0.8rem;
+        width: 100%;
+      }
+
+      .refresh-btn {
+        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+        width: 100%;
+      }
+
+      .logout-btn {
+        position: relative;
+        top: 0;
+        right: 0;
+        margin-bottom: 1rem;
+        display: block;
+        width: 100%;
+      }
+
+      .order-detail {
+        padding: 0.8rem;
+        margin-top: 0.8rem;
+      }
+
+      .order-detail h4 {
+        font-size: 0.9rem;
+        margin-bottom: 0.4rem;
+      }
+
+      .order-detail p {
+        font-size: 0.8rem;
+      }
+
+      .date-nav {
+        gap: 6px;
+        margin-bottom: 1rem;
+      }
+
+      .date-nav input {
+        padding: 0.5rem;
+      }
+
+      .sales-summary {
+        padding: 0.8rem;
+        margin-bottom: 0.8rem;
+      }
+
+      .sales-summary-item {
+        margin: 0.4rem 0;
+      }
+
+      .sales-summary-label {
+        font-size: 0.75rem;
+      }
+
+      .sales-summary-value {
+        font-size: 1rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 0.8rem;
+      }
+
+      h1 {
+        font-size: 1.1rem;
+        letter-spacing: 1px;
+      }
+
+      header {
+        padding: 0.8rem;
+        margin-bottom: 0.8rem;
+      }
+
+      header p {
+        font-size: 0.85rem;
+        margin: 0.3rem 0;
+      }
+
+      .admin-panel {
+        gap: 0.8rem;
+      }
+
+      .card {
+        padding: 1rem;
+      }
+
+      .card h2 {
+        font-size: 1rem;
+        margin-bottom: 0.8rem;
+      }
+
+      .stat {
+        font-size: 1.6rem;
+      }
+
+      .orders-table {
+        font-size: 0.75rem;
+      }
+
+      .orders-table th,
+      .orders-table td {
+        padding: 0.4rem 0.2rem;
+      }
+
+      .status {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.7rem;
+      }
+
+      .action-buttons button {
+        font-size: 0.65rem;
+        padding: 0.2rem 0.3rem;
+      }
+
+      .products-table {
+        font-size: 0.75rem;
+      }
+
+      .products-table th,
+      .products-table td {
+        padding: 0.5rem 0.3rem;
+      }
+
+      .product-status-btn {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.7rem;
+      }
+
+      .search-input {
+        padding: 0.5rem;
+        font-size: 0.85rem;
+      }
+
+      .refresh-btn {
+        padding: 0.5rem 0.8rem;
+        font-size: 0.8rem;
+      }
+
+      .logout-btn {
+        padding: 0.5rem 0.8rem;
+        font-size: 0.8rem;
+      }
+
+      .login-container {
+        padding: 1.5rem;
+        width: 90%;
+      }
+
+      .login-container h2 {
+        font-size: 1.4rem;
+        margin-bottom: 1rem;
+      }
+
+      .login-container input {
+        padding: 0.7rem;
+        font-size: 0.95rem;
+      }
+
+      .login-btn {
+        padding: 0.7rem;
+        font-size: 0.95rem;
+      }
+    }
+
+    .login-modal {
+      display: flex;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+
+    .login-container {
+      background: white;
+      padding: 3rem;
+      border-radius: 15px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+    }
+
+    .login-container h2 {
+      color: #1a0f2e;
+      margin-bottom: 1.5rem;
+      font-size: 1.8rem;
+    }
+
+    .login-container input {
+      width: 100%;
+      padding: 0.8rem;
+      margin-bottom: 1rem;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    .login-container input:focus {
+      outline: none;
+      border-color: #ff006e;
+      box-shadow: 0 0 10px rgba(255, 0, 110, 0.2);
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 0.8rem;
+      background: linear-gradient(135deg, #ff006e 0%, #8338ec 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .login-btn:hover {
+      opacity: 0.9;
+    }
+
+    .error-message {
+      color: #e74c3c;
+      margin-bottom: 1rem;
+      display: none;
+    }
+
+    .logout-btn {
+      position: absolute;
+      top: 2rem;
+      right: 2rem;
+      padding: 0.6rem 1.2rem;
+      background: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.3s;
+    }
+
+    .logout-btn:hover {
+      background: #c0392b;
+    }
+
+    header {
+      position: relative;
+    }
+
+    .sales-section {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 2rem;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+
+    .sales-section h2 {
+      color: #1a1a1a;
+      margin-bottom: 1rem;
+      font-size: 1.3rem;
+    }
+
+    .sales-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    .sales-table th {
+      background: linear-gradient(135deg, #1a0f2e 0%, #2d1b4e 100%);
+      color: white;
+      padding: 0.7rem;
+      text-align: left;
+      font-size: 0.85rem;
+    }
+
+    .sales-table td {
+      padding: 0.7rem;
+      border-bottom: 1px solid #eee;
+    }
+
+    .sales-table tr:hover {
+      background: #f9f9f9;
+    }
+
+    .sales-row {
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .sales-row:hover {
+      background: #fffacd;
+    }
+
+    .sales-amount {
+      font-weight: bold;
+      color: #ff006e;
+      font-size: 1.1rem;
+    }
+
+    .sales-count {
+      color: #8338ec;
+      font-weight: bold;
+    }
+
+    .no-sales {
+      text-align: center;
+      padding: 2rem;
+      color: #999;
+    }
+
+    .date-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 1.5rem;
+    }
+
+    .date-nav input {
+      padding: 0.5rem 0.7rem;
+      border: 2px solid #ddd;
+      border-radius: 5px;
+      font-size: 0.9rem;
+    }
+
+    .date-nav input:focus {
+      outline: none;
+      border-color: #ff006e;
+      box-shadow: 0 0 10px rgba(255, 0, 110, 0.2);
+    }
+
+    .sales-summary {
+      background: linear-gradient(135deg, #1a0f2e 0%, #2d1b4e 100%);
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      color: white;
+      text-align: center;
+    }
+
+    .sales-summary-item {
+      margin: 0.5rem 0;
+    }
+
+    .sales-summary-label {
+      font-size: 0.8rem;
+      opacity: 0.9;
+    }
+
+    .sales-summary-value {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #ffbe0b;
+    }
+
+    .products-section {
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      margin-top: 2rem;
+    }
+
+    .products-section h2 {
+      color: #1a1a1a;
+      margin-bottom: 1.5rem;
+      font-size: 1.8rem;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 0.8rem;
+      border: 2px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: #ff006e;
+      box-shadow: 0 0 10px rgba(255, 0, 110, 0.2);
+    }
+
+    .products-table {
+      width: 100%;
+      border-collapse: collapse;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .products-table thead {
+      background: linear-gradient(135deg, #1a0f2e 0%, #2d1b4e 100%);
+      color: white;
+    }
+
+    .products-table th {
+      padding: 1rem;
+      text-align: left;
+      font-weight: bold;
+      border: none;
+    }
+
+    .products-table tbody {
+      background: white;
+    }
+
+    .products-table td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+      color: #1a0f2e;
+      font-weight: 500;
+    }
+
+    .products-table tbody tr {
+      background-color: #ffffff;
+      transition: background-color 0.2s;
+    }
+
+    .products-table tbody tr:hover {
+      background-color: #f0f0f0;
+    }
+
+    .products-table tbody tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    .product-status-btn {
+      padding: 0.6rem 1.2rem;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.9rem;
+      transition: all 0.3s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .product-status-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+<body>
+  <div class="login-modal" id="loginModal">
+    <div class="login-container">
+      <h2>🔒 Admin Panel</h2>
+      <div class="error-message" id="errorMessage">Falsches Passwort!</div>
+      <input type="password" id="passwordInput" placeholder="Passwort eingeben" onkeypress="handlePasswordKeypress(event)">
+      <button class="login-btn" onclick="checkPassword()">Anmelden</button>
+    </div>
+  </div>
+
+  <div class="container" id="mainContainer" style="display: none;">
+    <header>
+      <h1>🍕 Milano Pizza - Verwaltungspanel</h1>
+      <p>Bestellverwaltung und Statistiken (Lokaler Modus)</p>
+      <small style="opacity: 0.8;">Daten werden automatisch im Browser gespeichert</small>
+    </header>
+
+    <div class="admin-panel">
+      <div class="card">
+        <h2>Gesamt Bestellungen</h2>
+        <p class="stat" id="totalOrders">0</p>
+      </div>
+      <div class="card">
+        <h2>Ausstehend</h2>
+        <p class="stat" id="pendingOrders">0</p>
+      </div>
+      <div class="card">
+        <h2>Gesamtumsatz</h2>
+        <p class="stat" id="totalRevenue">€0.00</p>
+      </div>
+    </div>
+
+    <div class="main-layout">
+      <div>
+        <div class="orders-section">
+          <h2>Bestellungen</h2>
+          <div style="margin-bottom: 1rem; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+            <button class="refresh-btn" onclick="loadOrders()" title="Live: Daten kommen automatisch von Firebase">🔄 Aktualisieren</button>
+          </div>
+          
+          <table class="orders-table">
+            <thead>
+              <tr>
+                <th>Bestellnummer</th>
+                <th>Kunde</th>
+                <th>Betrag</th>
+                <th>Status</th>
+                <th>Aktion</th>
+              </tr>
+            </thead>
+            <tbody id="ordersBody">
+              <tr><td colspan="5" class="no-orders">Keine Bestellungen gefunden</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="sales-section">
+        <h2>📊 Tägliche Verkäufe</h2>
+        <div class="sales-summary">
+          <div class="sales-summary-item">
+            <div class="sales-summary-label">Heute Gesamt</div>
+            <div class="sales-summary-value" id="todaySalesAmount">€0.00</div>
+          </div>
+          <div class="sales-summary-item">
+            <div class="sales-summary-label">Heute Bestellungen</div>
+            <div class="sales-summary-value" id="todayOrdersCount">0</div>
+          </div>
+        </div>
+        <div class="date-nav">
+          <input type="date" id="saleDate" onchange="filterByDate()" style="width: 100%;">
+          <button onclick="clearDateFilter()" style="padding: 0.6rem 0.4rem; background: #999; width: 100%; margin-top: 0.5rem;">✕ Filter</button>
+        </div>
+        <table class="sales-table">
+          <thead>
+            <tr>
+              <th>Datum</th>
+              <th>Anzahl</th>
+              <th>Umsatz</th>
+            </tr>
+          </thead>
+          <tbody id="salesBody">
+            <tr><td colspan="3" class="no-sales">Keine Verkäufe</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="products-section">
+      <h2>🛍️ Produktverwaltung</h2>
+      <input type="text" id="adminProductSearch" class="search-input" placeholder="Produkt suchen...">
+      <div style="overflow-x: auto;">
+        <table class="products-table">
+          <thead>
+            <tr>
+              <th style="text-align: left;">Produkt Name</th>
+              <th style="text-align: center;">Verfügbarkeit</th>
+            </tr>
+          </thead>
+          <tbody id="adminProductsList">
+            <tr><td colspan="2" style="text-align: center; padding: 2rem; color: #999;">⏳ Produkte werden geladen...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let orders = [];
+    let openDetails = new Set();
+
+    firebase.initializeApp({
+      apiKey: "AIzaSyDbcY_PrgZC4QqPStY4J0kPBU0IXWFTzUI",
+      authDomain: "milanomomo-cc489.firebaseapp.com",
+      databaseURL: "https://milanomomo-cc489-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "milanomomo-cc489",
+      storageBucket: "milanomomo-cc489.firebasestorage.app",
+      messagingSenderId: "216622568116",
+      appId: "1:216622568116:web:49e22663e7a63c403abde1",
+      measurementId: "G-SGHWDNS9C3"
+    });
+
+    function processOrders(snapshot) {
+      const data = snapshot.val();
+      orders = [];
+      if (data) {
+        Object.keys(data).forEach(key => {
+          const order = data[key];
+          order._key = key;
+          orders.push(order);
+        });
+      }
+      displayOrders();
+      updateStats();
+    }
+
+    function loadOrders() {
+      firebase.database().ref('orders').once('value', processOrders);
+    }
+
+    firebase.database().ref('orders').on('value', processOrders);
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      localStorage.removeItem('adminAuth');
+      document.getElementById('loginModal').style.display = 'flex';
+      document.getElementById('mainContainer').style.display = 'none';
+      document.getElementById('passwordInput').focus();
+      loadOrders();
+    });
+
+    // Display orders
+    function displayOrders() {
+      const tbody = document.getElementById('ordersBody');
+      tbody.innerHTML = '';
+
+      if (orders.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="no-orders">Keine Bestellungen gefunden</td></tr>';
+        return;
+      }
+
+      const sortedOrders = [...orders].sort((a, b) => b.id - a.id);
+      
+      const groupedByDate = {};
+      sortedOrders.forEach(order => {
+        const dateStr = order.createdAt || order.timestamp;
+        const date = new Date(dateStr).toLocaleDateString('de-DE');
+        if (!groupedByDate[date]) {
+          groupedByDate[date] = [];
+        }
+        groupedByDate[date].push(order);
+      });
+
+      const sortedDates = Object.keys(groupedByDate).sort((a, b) => {
+        return new Date(b.split('.').reverse().join('-')) - new Date(a.split('.').reverse().join('-'));
+      });
+
+      sortedDates.forEach(date => {
+        const dateHeaderRow = document.createElement('tr');
+        dateHeaderRow.style.background = 'linear-gradient(135deg, #1a0f2e 0%, #2d1b4e 100%)';
+        dateHeaderRow.innerHTML = `
+          <td colspan="5" style="color: white; font-weight: bold; padding: 1rem; border-radius: 5px;">
+            📅 ${date}
+          </td>
+        `;
+        tbody.appendChild(dateHeaderRow);
+
+        groupedByDate[date].forEach(order => {
+          const itemsHtml = order.items.map(item => {
+            let itemText = `${item.name} (${item.quantity}x €${item.price.toFixed(2)})`;
+            
+            if (item.customization) {
+              if (item.customization.addedToppingNames && item.customization.addedToppingNames.length > 0) {
+                itemText += `<br><span style="color: #27ae60; font-size: 0.85rem;"><strong>✓ Zusätze:</strong> ${item.customization.addedToppingNames.join(', ')}</span>`;
+              }
+              if (item.customization.removedToppingNames && item.customization.removedToppingNames.length > 0) {
+                itemText += `<br><span style="color: #e74c3c; font-size: 0.85rem;"><strong>✗ Entfernt:</strong> ${item.customization.removedToppingNames.join(', ')}</span>`;
+              }
+            }
+            
+            if (item.note) {
+              itemText += ` - <strong>Notiz:</strong> ${item.note}`;
+            }
+            return itemText;
+          }).join('<br>');
+
+          const statusClass = order.status.toLowerCase()
+            .replace('neu', 'neu')
+            .replace('in bearbeitung', 'in-progress')
+            .replace('geliefert', 'delivered');
+
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>#${order.id}</td>
+            <td>${order.customerName || 'Online'}</td>
+            <td>€${order.total ? order.total.toFixed(2) : order.totalPrice ? order.totalPrice.toFixed(2) : '0.00'}</td>
+            <td><span class="status ${statusClass}">${order.status || 'Neu'}</span></td>
+            <td>
+              <div class="action-buttons">
+                <button onclick="toggleDetails(${order.id})" title="Details anzeigen">📋 Details</button>
+                <button onclick="updateStatus(${order.id})" title="Status aktualisieren">🔄 Status</button>
+                <button onclick="deleteOrder(${order.id})" title="Bestellung löschen" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">🗑️ Löschen</button>
+              </div>
+            </td>
+          `;
+
+          const timeStr = order.createdAt ? new Date(order.createdAt).toLocaleString('de-DE') : (order.timestamp ? new Date(order.timestamp).toLocaleString('de-DE') : 'Nicht angegeben');
+          
+          const detailsRow = document.createElement('tr');
+          detailsRow.id = `details-${order.id}`;
+          detailsRow.style.display = openDetails.has(order.id) ? 'table-row' : 'none';
+          const itemsTotal = order.itemsTotal || (order.items ? order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) : 0);
+          const deliveryFee = order.deliveryFee || 0;
+          const totalAmount = order.total || order.totalPrice || 0;
+          
+          detailsRow.innerHTML = `
+            <td colspan="5">
+              <div class="order-detail">
+                <h4>📦 Bestelldetails</h4>
+                ${order.customerPhone ? `<p><strong>Telefon:</strong> ${order.customerPhone}</p>` : ''}
+                ${order.customerAddress ? `<p><strong>Adresse:</strong> ${order.customerAddress}</p>` : ''}
+                <p><strong>Zeit:</strong> ${timeStr}</p>
+                <h4 style="margin-top: 1rem;">📋 Artikel</h4>
+                <div class="items-list">
+                  ${itemsHtml}
+                </div>
+                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #ddd; font-size: 0.9rem;">
+                  <p><strong>Artikel:</strong> €${itemsTotal.toFixed(2)}</p>
+                  <p><strong>Lieferkosten:</strong> €${deliveryFee.toFixed(2)}</p>
+                  <p style="font-size: 1rem; font-weight: bold; color: #d35400;"><strong>Gesamt:</strong> €${totalAmount.toFixed(2)}</p>
+                </div>
+              </div>
+            </td>
+          `;
+
+          tbody.appendChild(row);
+          tbody.appendChild(detailsRow);
+        });
+      });
+    }
+
+    // Toggle details
+    function toggleDetails(orderId) {
+      const details = document.getElementById(`details-${orderId}`);
+      if (details.style.display === 'none') {
+        details.style.display = 'table-row';
+        openDetails.add(orderId);
+      } else {
+        details.style.display = 'none';
+        openDetails.delete(orderId);
+      }
+    }
+
+     function updateStatus(orderId) {
+      const statuses = ['Neu', 'In Bearbeitung', 'Geliefert'];
+      const order = orders.find(o => o.id === orderId);
+      if (!order) return;
+
+      const currentIndex = statuses.indexOf(order.status);
+      const nextStatus = statuses[(currentIndex + 1) % statuses.length];
+
+      firebase.database().ref('orders/' + order._key).update({ status: nextStatus });
+    }
+
+    function deleteOrder(orderId) {
+      if (confirm('Möchten Sie diese Bestellung wirklich löschen?')) {
+        const order = orders.find(o => o.id === orderId);
+        if (order && order._key) {
+          firebase.database().ref('orders/' + order._key).remove();
+        }
+      }
+    }
+
+    // Update stats
+    function updateStats() {
+      document.getElementById('totalOrders').textContent = orders.length;
+      
+      const pending = orders.filter(o => o.status === 'Neu').length;
+      document.getElementById('pendingOrders').textContent = pending;
+
+      const total = orders.reduce((sum, order) => sum + (order.totalPrice || order.total || 0), 0);
+      document.getElementById('totalRevenue').textContent = `€${total.toFixed(2)}`;
+      
+      displayDailySales();
+    }
+
+    function calculateDailySales() {
+      const dailySales = {};
+      
+      orders.forEach(order => {
+        const dateStr = order.createdAt || order.timestamp;
+        const date = new Date(dateStr).toLocaleDateString('de-DE');
+        if (!dailySales[date]) {
+          dailySales[date] = {
+            date: date,
+            count: 0,
+            total: 0
+          };
+        }
+        dailySales[date].count += 1;
+        dailySales[date].total += order.totalPrice || order.total || 0;
+      });
+      
+      return dailySales;
+    }
+
+    function displayDailySales() {
+      const dailySales = calculateDailySales();
+      const tbody = document.getElementById('salesBody');
+      tbody.innerHTML = '';
+
+      const today = new Date().toLocaleDateString('de-DE');
+      const todaySales = dailySales[today];
+
+      if (todaySales) {
+        const todayTotal = todaySales.total || 0;
+        document.getElementById('todaySalesAmount').textContent = `€${todayTotal.toFixed(2)}`;
+        document.getElementById('todayOrdersCount').textContent = todaySales.count;
+      } else {
+        document.getElementById('todaySalesAmount').textContent = '€0.00';
+        document.getElementById('todayOrdersCount').textContent = '0';
+      }
+
+      if (Object.keys(dailySales).length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="no-sales">Keine Verkäufe vorhanden</td></tr>';
+        return;
+      }
+
+      const sortedDates = Object.keys(dailySales).sort((a, b) => {
+        return new Date(b.split('.').reverse().join('-')) - new Date(a.split('.').reverse().join('-'));
+      });
+
+      sortedDates.forEach(date => {
+        const sales = dailySales[date];
+        const row = document.createElement('tr');
+        row.className = 'sales-row';
+        row.onclick = () => {
+          document.getElementById('saleDate').value = new Date(date.split('.').reverse().join('-')).toISOString().split('T')[0];
+          filterByDate();
+        };
+        row.innerHTML = `
+          <td>📅 ${date}</td>
+          <td><span class="sales-count">${sales.count}</span></td>
+          <td><span class="sales-amount">€${sales.total.toFixed(2)}</span></td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function filterByDate() {
+      const selectedDate = document.getElementById('saleDate').value;
+      if (!selectedDate) {
+        displayOrders();
+        return;
+      }
+      
+      const selectedDateFormatted = new Date(selectedDate).toLocaleDateString('de-DE');
+      const filteredOrders = orders.filter(order => {
+        const dateStr = order.createdAt || order.timestamp;
+        const orderDate = new Date(dateStr).toLocaleDateString('de-DE');
+        return orderDate === selectedDateFormatted;
+      });
+
+      const tbody = document.getElementById('ordersBody');
+      tbody.innerHTML = '';
+
+      if (filteredOrders.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="no-orders">Keine Bestellungen für dieses Datum gefunden</td></tr>';
+        return;
+      }
+
+      filteredOrders.forEach(order => {
+        const itemsHtml = order.items.map(item => {
+          let itemText = `${item.name} (${item.quantity}x €${item.price.toFixed(2)})`;
+          
+          if (item.customization) {
+            if (item.customization.addedToppingNames && item.customization.addedToppingNames.length > 0) {
+              itemText += `<br><span style="color: #27ae60; font-size: 0.85rem;"><strong>✓ Zusätze:</strong> ${item.customization.addedToppingNames.join(', ')}</span>`;
+            }
+            if (item.customization.removedToppingNames && item.customization.removedToppingNames.length > 0) {
+              itemText += `<br><span style="color: #e74c3c; font-size: 0.85rem;"><strong>✗ Entfernt:</strong> ${item.customization.removedToppingNames.join(', ')}</span>`;
+            }
+          }
+          
+          if (item.note) {
+            itemText += ` - <strong>Notiz:</strong> ${item.note}`;
+          }
+          return itemText;
+        }).join('<br>');
+
+        const statusClass = order.status.toLowerCase()
+          .replace('neu', 'neu')
+          .replace('in bearbeitung', 'in-progress')
+          .replace('geliefert', 'delivered');
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>#${order.id}</td>
+          <td>${order.customerName || 'Online'}</td>
+          <td>€${order.total ? order.total.toFixed(2) : order.totalPrice ? order.totalPrice.toFixed(2) : '0.00'}</td>
+          <td><span class="status ${statusClass}">${order.status || 'Neu'}</span></td>
+          <td>
+            <div class="action-buttons">
+              <button onclick="toggleDetails(${order.id})" title="Details anzeigen">📋 Details</button>
+              <button onclick="updateStatus(${order.id})" title="Status aktualisieren">🔄 Status</button>
+              <button onclick="deleteOrder(${order.id})" title="Bestellung löschen" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">🗑️ Löschen</button>
+            </div>
+          </td>
+        `;
+
+        const timeStr = order.createdAt ? new Date(order.createdAt).toLocaleString('de-DE') : (order.timestamp ? new Date(order.timestamp).toLocaleString('de-DE') : 'Nicht angegeben');
+        const itemsTotal = order.itemsTotal || (order.items ? order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) : 0);
+        const deliveryFee = order.deliveryFee || 0;
+        const totalAmount = order.total || order.totalPrice || 0;
+        
+        const detailsRow = document.createElement('tr');
+        detailsRow.id = `details-${order.id}`;
+        detailsRow.style.display = 'none';
+        detailsRow.innerHTML = `
+          <td colspan="5">
+            <div class="order-detail">
+              <h4>📦 Bestelldetails</h4>
+              ${order.customerPhone ? `<p><strong>Telefon:</strong> ${order.customerPhone}</p>` : ''}
+              ${order.customerAddress ? `<p><strong>Adresse:</strong> ${order.customerAddress}</p>` : ''}
+              <p><strong>Zeit:</strong> ${timeStr}</p>
+              <h4 style="margin-top: 1rem;">📋 Artikel</h4>
+              <div class="items-list">
+                ${itemsHtml}
+              </div>
+              <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #ddd; font-size: 0.9rem;">
+                <p><strong>Artikel:</strong> €${itemsTotal.toFixed(2)}</p>
+                <p><strong>Lieferkosten:</strong> €${deliveryFee.toFixed(2)}</p>
+                <p style="font-size: 1rem; font-weight: bold; color: #d35400;"><strong>Gesamt:</strong> €${totalAmount.toFixed(2)}</p>
+              </div>
+            </div>
+          </td>
+        `;
+
+        tbody.appendChild(row);
+        tbody.appendChild(detailsRow);
+      });
+    }
+
+    function clearDateFilter() {
+      document.getElementById('saleDate').value = '';
+      displayOrders();
+    }
+
+    // Password authentication
+    const ADMIN_PASSWORD = 'jihad123';
+
+    function checkPassword() {
+      const password = document.getElementById('passwordInput').value;
+      console.log('Password entered:', password);
+      console.log('Admin password:', ADMIN_PASSWORD);
+      if (password === ADMIN_PASSWORD) {
+        localStorage.setItem('adminAuth', 'true');
+        document.getElementById('loginModal').style.display = 'none';
+        document.getElementById('mainContainer').style.display = 'block';
+        document.getElementById('passwordInput').value = '';
+        loadAdminProducts();
+        console.log('Password correct!');
+      } else {
+        document.getElementById('errorMessage').style.display = 'block';
+        document.getElementById('passwordInput').value = '';
+        console.log('Password incorrect!');
+        setTimeout(() => {
+          document.getElementById('errorMessage').style.display = 'none';
+        }, 3000);
+      }
+    }
+
+    function handlePasswordKeypress(event) {
+      if (event.key === 'Enter') {
+        checkPassword();
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('adminAuth');
+      document.getElementById('loginModal').style.display = 'flex';
+      document.getElementById('mainContainer').style.display = 'none';
+      document.getElementById('passwordInput').value = '';
+      document.getElementById('passwordInput').focus();
+    }
+
+    let adminProducts = [];
+
+    async function loadAdminProducts() {
+      adminProducts = [];
+      try {
+        const snapshot = await firebase.database().ref('productsState').once('value');
+        const state = snapshot.val() || {};
+        FALLBACK_PRODUCTS.forEach(p => {
+          p.available = state[p.id] !== undefined ? state[p.id].available !== false : true;
+          adminProducts.push(p);
+        });
+      } catch (e) {
+        console.error('Firebase Fehler:', e);
+        FALLBACK_PRODUCTS.forEach(p => adminProducts.push({...p, available: true}));
+      }
+      displayAdminProducts(adminProducts);
+    }
+
+    const FALLBACK_PRODUCTS = [{"id":1,"name":"Margherita"},{"id":2,"name":"Mozzarella"},{"id":3,"name":"Formaggi"},{"id":4,"name":"Fungi"},{"id":5,"name":"Salami"},{"id":6,"name":"Prosciutto"},{"id":7,"name":"Salami Fungi"},{"id":8,"name":"Prosciutto Fungi"},{"id":9,"name":"Prosciutto Salami"},{"id":10,"name":"Milano"},{"id":11,"name":"Italia"},{"id":12,"name":"Capri"},{"id":13,"name":"Santorini"},{"id":14,"name":"Ilo"},{"id":15,"name":"Hawaii"},{"id":16,"name":"Tonno"},{"id":17,"name":"Madridi"},{"id":18,"name":"Scampi"},{"id":19,"name":"Frutti de Mare"},{"id":20,"name":"Veggie"},{"id":21,"name":"Palermo"},{"id":22,"name":"Hähnchenbrust"},{"id":23,"name":"Classico"},{"id":24,"name":"Miami"},{"id":25,"name":"Island"},{"id":26,"name":"Paris"},{"id":27,"name":"Rucola"},{"id":28,"name":"Bacon"},{"id":29,"name":"Chicken Curry"},{"id":30,"name":"Istanbul"},{"id":31,"name":"Hot Salami"},{"id":33,"name":"Wunsch"},{"id":35,"name":"Pizza Della Casa"},{"id":37,"name":"Pizza Spezial"},{"id":38,"name":"Pizza Hot Dog"},{"id":39,"name":"Pizza Sucuk"},{"id":40,"name":"Pizza Hot Beef"},{"id":41,"name":"Pizza Spinat"},{"id":42,"name":"Pizza Luna"},{"id":44,"name":"Extra Zutaten"},{"id":45,"name":"Käse Rand"},{"id":46,"name":"Hamburger"},{"id":47,"name":"Cheeseburger"},{"id":48,"name":"Chicken Burger"},{"id":49,"name":"Bacon Burger"},{"id":50,"name":"Champignon Burger"},{"id":51,"name":"Crispy Chicken Burger"},{"id":52,"name":"Italian Burger"},{"id":53,"name":"Jumbo Cheeseburger"},{"id":54,"name":"Jumbo Hamburger"},{"id":55,"name":"Jumbo Chicken Burger"},{"id":56,"name":"Mexico Burger"},{"id":57,"name":"Chili Cheeseburger"},{"id":58,"name":"Menü1: Hamburger"},{"id":59,"name":"Menü2: Cheeseburger"},{"id":60,"name":"Menü3: Jumbo Cheeseburger"},{"id":61,"name":"Menü4: Jumbo Chicken"},{"id":62,"name":"Croque Madame"},{"id":63,"name":"Croque Camembert"},{"id":64,"name":"Croque Schinken"},{"id":65,"name":"Croque Salami Champignons"},{"id":66,"name":"Croque Salami"},{"id":67,"name":"Croque Hawaii"},{"id":68,"name":"Croque Thunfisch"},{"id":69,"name":"Croque Hähnchenbrust"},{"id":70,"name":"Croque Sucuk"},{"id":71,"name":"Gemischter Salat"},{"id":72,"name":"Thunfisch Salat"},{"id":73,"name":"Miista"},{"id":74,"name":"Ma Balla"},{"id":75,"name":"Tonno"},{"id":76,"name":"Scampi"},{"id":77,"name":"Chef"},{"id":78,"name":"Della Casa"},{"id":79,"name":"Guken Salat"},{"id":80,"name":"Gyros"},{"id":81,"name":"Alla Panna"},{"id":82,"name":"Carbonara"},{"id":83,"name":"Pastore"},{"id":84,"name":"Toscana"},{"id":124,"name":"Alla Milano"},{"id":125,"name":"Italia"},{"id":126,"name":"Della Casa"},{"id":127,"name":"Pesto und Put"},{"id":128,"name":"Bolognese"},{"id":129,"name":"Scampi"},{"id":130,"name":"Wunsch"},{"id":131,"name":"Pasta Classico"},{"id":132,"name":"Käse überbacken"},{"id":133,"name":"Wiener Schnitzel"},{"id":134,"name":"Jägerschnitzel"},{"id":135,"name":"Zigeunerschnitzel"},{"id":136,"name":"Snitzel Hollandise"},{"id":137,"name":"Käsebrötchen"},{"id":138,"name":"Pizzabrötchen"},{"id":139,"name":"American Piyyabrot"},{"id":140,"name":"Knoblauch Brot"},{"id":141,"name":"Käse Knoblauch Brot"},{"id":142,"name":"Süßkartoffeln-Pommes"},{"id":143,"name":"Chili Cheese Pommes"},{"id":144,"name":"Pommes"},{"id":145,"name":"Country Fries"},{"id":146,"name":"Twister"},{"id":147,"name":"Chili Pommes"},{"id":148,"name":"Kroketten"},{"id":149,"name":"Gegrillte Champignons"},{"id":150,"name":"Gegrilltes Gemüse"},{"id":151,"name":"BBQ Pommes"},{"id":152,"name":"BBQ Twister"},{"id":153,"name":"Chili Twister"},{"id":154,"name":"Salami"},{"id":155,"name":"Schinken"},{"id":156,"name":"Thunfisch"},{"id":157,"name":"Hähnchen"},{"id":158,"name":"Puter"},{"id":159,"name":"Hot Chicken"},{"id":160,"name":"Hawaii Roll"},{"id":161,"name":"Überraschung"},{"id":162,"name":"Feuerring"},{"id":163,"name":"Käse Ring+dip"},{"id":164,"name":"Cola 1Liter"},{"id":165,"name":"Cola 0.33L"},{"id":166,"name":"Redbull"},{"id":167,"name":"Durstlöscher"},{"id":168,"name":"Fanta (0.33l)"},{"id":169,"name":"Wasser (0.5l)"},{"id":170,"name":"A1 Supper Familienangebot"},{"id":171,"name":"A2 Pizzblech"},{"id":172,"name":"A3 3* Pizza"},{"id":173,"name":"Chicken Nuggets"},{"id":174,"name":"Chicken Wings"},{"id":175,"name":"Crispy Chicken Fingers"},{"id":176,"name":"Chili Cheese Nuggets"},{"id":177,"name":"Mozzarella Sticks"},{"id":178,"name":"Mix-Box"},{"id":179,"name":"Curry Wurst"},{"id":180,"name":"Kania Ketchup"},{"id":181,"name":"Mayonnaise"},{"id":182,"name":"American Sauce"},{"id":183,"name":"Knoblauch Sauce"}];
+
+    function displayAdminProducts(productsToDisplay, searchTerm = '') {
+      const tbody = document.getElementById('adminProductsList');
+      tbody.innerHTML = '';
+
+      const filtered = productsToDisplay.filter(product =>
+        product.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="2" style="text-align: center; padding: 2rem; color: #999; border-bottom: 1px solid #eee;">Keine Produkte gefunden</td></tr>';
+        return;
+      }
+
+      filtered.forEach((product, idx) => {
+        const row = document.createElement('tr');
+        const isAvailable = product.available !== false;
+        const bgColor = isAvailable ? '#27ae60' : '#e74c3c';
+        const statusText = isAvailable ? '✅ Verfügbar' : '❌ Nicht Verfügbar';
+        
+        row.innerHTML = `
+          <td style="padding: 1rem; text-align: left; border: none; font-weight: 500; color: #1a0f2e;">${product.name}</td>
+          <td style="padding: 1rem; text-align: center; border: none;">
+            <button class="product-status-btn" onclick="toggleAdminProductAvailability(${product.id}, ${!isAvailable})" 
+                    style="background: ${bgColor};">
+              ${statusText}
+            </button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function toggleAdminProductAvailability(productId, available) {
+      const product = adminProducts.find(p => p.id === productId);
+      if (!product) {
+        alert('Produkt nicht gefunden');
+        return;
+      }
+
+      product.available = available;
+      const state = {};
+      adminProducts.forEach(p => { state[p.id] = { available: p.available !== false }; });
+      firebase.database().ref('productsState').set(state)
+        .then(() => displayAdminProducts(adminProducts))
+        .catch(err => {
+          console.error('Firebase Fehler:', err);
+          alert('Fehler beim Speichern: ' + err.message);
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        const searchInput = document.getElementById('adminProductSearch');
+        if (searchInput) {
+          searchInput.addEventListener('input', (e) => {
+            displayAdminProducts(adminProducts, e.target.value);
+          });
+        }
+      }, 500);
+    });
+
+  </script>
+</body>
+</html>

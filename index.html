@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Milano Pizza - Echte italienische Pizza</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+
+<!-- Navigation Bar -->
+<nav class="navbar" id="navbar">
+  <div class="navbar-container">
+    <div class="brand-group">
+      <div class="logo">Milano Pizza</div>
+      <a href="#cart" class="cart-link">
+        <span class="cart-icon">🛒</span>
+        <span class="cart-count" id="cartCount">0</span>
+      </a>
+    </div>
+    <button class="mobile-menu-toggle" id="mobileMenuToggle">☰</button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#home">Startseite</a></li>
+      <li><a href="#menu">Menü</a></li>
+      <li><a href="#about">Über uns</a></li>
+      <li><a href="#contact">Kontakt</a></li>
+      <li style="display: none;"><a href="#" onclick="openAdminPanel(); return false;" style="font-size: 1.5rem;">⚙️</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- Hero Section -->
+<section class="hero" id="home">
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <div class="hero-grid">
+      <div class="hero-text">
+        <h1 class="hero-title">Milano Pizza</h1>
+        <p class="hero-subtitle">Die beste Pizza in der Stadt</p>
+        <p class="hero-description">
+          Frische Zutaten, traditionelle Rezepte, spektakuläre Geschmäcke
+        </p>
+        <button class="cta-button" onclick="document.getElementById('menu').scrollIntoView({behavior: 'smooth'})">
+          🛒 JETZT BESTELLEN
+        </button>
+      </div>
+      <div class="hero-image">
+      </div>
+    </div>
+  </div>
+  <div class="hero-wave"></div>
+</section>
+
+<!-- Menu Section -->
+<section class="menu" id="menu">
+  <div class="container">
+    <h2 class="section-title">Unser Menü</h2>
+
+    <!-- Menu Categories -->
+    <div class="menu-categories">
+      <button class="category-btn active" data-category="pizza">Pizza 🍕</button>
+      <button class="category-btn" data-category="burger">Burger 🍔</button>
+      <button class="category-btn" data-category="croque">Croque 🥪</button>
+      <button class="category-btn" data-category="salat">Salat 🥗</button>
+      <button class="category-btn" data-category="pasta">Pasta 🍝</button>
+      <button class="category-btn" data-category="schnitzel">Schnitzel 🥩</button>
+      <button class="category-btn" data-category="snacks">Snacks 🍟</button>
+      <button class="category-btn" data-category="beilagen">Beilagen 🍞</button>
+      <button class="category-btn" data-category="fingerfood">Fingerfood 🍗</button>
+
+      <button class="category-btn" data-category="getranke">Getränke 🥤</button>
+      <button class="category-btn" data-category="snackrolls">Snack Rolls 🌮</button>
+      <button class="category-btn" data-category="sauces">Sauces and Dips 🍯</button>
+    </div>
+
+    <!-- Search Bar for Pizza -->
+    <div class="search-container" id="pizzaSearchContainer" style="display: none;">
+      <input type="text" id="pizzaSearchInput" class="search-input" placeholder="Suche nach Gerichten...">
+      <button class="search-btn" onclick="clearPizzaSearch()">✕</button>
+    </div>
+
+    <div class="products-grid" id="productsGrid">
+      <!-- Products will be loaded here by JavaScript -->
+    </div>
+  </div>
+</section>
+
+<!-- About Section -->
+<section class="about" id="about">
+  <div class="container">
+    <div class="about-content">
+      <div class="about-image">
+        <img src="logo.gif" alt="Milano Pizza Logo" class="about-main-logo">
+      </div>
+      <div class="about-text">
+        <h2 class="section-title">Über Milano Pizza</h2>
+        <p>
+          Willkommen bei Milano Pizza, wo Tradition und Leidenschaft in jedem Bissen vereint sind. Seit Jahren bereiten wir authentische Pizza mit den besten Zutaten zu.
+        </p>
+        <p>
+          Jede Pizza wird mit Liebe und Sorgfalt zubereitet, von der Herstellung des Teigs bis zur 
+          perfekten Bräunung im Ofen. Wir verwenden nur die frischesten Zutaten, um Ihnen ein 
+          unvergessliches kulinarisches Erlebnis zu bieten.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Contact Section -->
+<section class="contact" id="contact">
+  <div class="container">
+    <div class="contact-content">
+      <div class="contact-map">
+        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2413.8!2d10.4234!3d53.0234!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2sHauptstra%C3%9Fe%208%2C%2029574%20Ebstorf!5e0!3m2!1sde!2sde!4v1234567890" width="100%" height="300" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+      </div>
+      <div class="contact-info">
+        <h2 class="section-title">Kontaktieren Sie uns</h2>
+        <div class="info-item">
+          <span class="info-icon">📍</span>
+          <p>Hauptstraße 8, 29574 Ebstorf</p>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">📞</span>
+          <p>+49(0)5822-9416789</p>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">📧</span>
+          <p>Jihad7418@gmail.com</p>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">⏰</span>
+          <p>Mo, Mi, Do, Fr, Sa, So: 15:00 - 22:00<br>Di: Geschlossen</p>
+        </div>
+        <div class="social-links">
+          <a href="#" class="social-icon">f</a>
+          <a href="#" class="social-icon">📷</a>
+          <a href="#" class="social-icon">🐦</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <p>&copy; 2025 Milano Pizza - Alle Rechte vorbehalten</p>
+</footer>
+
+<!-- Shopping Cart Modal -->
+<div class="modal" id="cartModal">
+  <div class="modal-content">
+    <span class="close" onclick="closeCart()">&times;</span>
+    <h2>Einkaufswagen</h2>
+    <div class="cart-items" id="cartItems">
+      <!-- Cart items will be displayed here -->
+    </div>
+    <div class="cart-summary">
+      <h3>Artikel: <span id="itemsTotal">€0.00</span></h3>
+      <h3 style="color: #d35400; border-top: 2px solid #ddd; padding-top: 0.5rem; margin-top: 0.5rem;">Gesamt: <span id="cartTotal">€0.00</span></h3>
+      <div style="margin: 1rem 0;">
+        <input type="text" id="cartCustomerName" placeholder="Ihr Name" required style="width: 100%; padding: 0.8rem; border: 2px solid #ddd; border-radius: 4px; font-size: 0.9rem;">
+      </div>
+      <div style="display: flex; gap: 0.5rem; flex-direction: column;">
+        <button class="checkout-button" onclick="sendToAdmin()" style="background: linear-gradient(135deg, #ff006e 0%, #8338ec 100%);">📨 Senden</button>
+        <button class="checkout-button" onclick="clearCart()" style="background: #e74c3c;">🗑️ Wagen leeren</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Checkout Modal -->
+<div class="modal" id="checkoutModal">
+  <div class="modal-content checkout-form">
+    <span class="close" onclick="closeCheckout()">&times;</span>
+    <h2>Bestellung aufgeben</h2>
+    <form onsubmit="submitOrder(event)">
+      <input type="text" placeholder="Ihr Name" id="customerName" required>
+      <input type="tel" placeholder="Telefon" id="customerPhone" required>
+      <textarea placeholder="Lieferadresse" id="customerAddress" required></textarea>
+      <button type="submit" class="submit-button">Bestellung aufgeben</button>
+    </form>
+  </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal" id="successModal">
+  <div class="modal-content success-modal">
+    <span class="close" onclick="closeSuccess()">&times;</span>
+    <h2>✓ Bestellung erfolgreich!</h2>
+    <p id="successMessage"></p>
+    <button class="close-button" onclick="closeSuccess()">Schließen</button>
+  </div>
+</div>
+
+<!-- Admin Login Modal -->
+<div class="modal" id="adminLoginModal">
+  <div class="modal-content" style="max-width: 400px;">
+    <span class="close" onclick="closeAdminLogin()">&times;</span>
+    <h2 style="text-align: center; margin-bottom: 1.5rem;">🔒 Admin Bereich</h2>
+    <input type="password" id="adminPassword" placeholder="Passwort eingeben" onkeypress="handleAdminPasswordKeypress(event)" style="width: 100%; padding: 0.8rem; margin-bottom: 1rem; border: 2px solid #ddd; border-radius: 4px; font-size: 1rem;">
+    <button onclick="verifyAdminPassword()" style="width: 100%; padding: 0.8rem; background: linear-gradient(135deg, #ff006e 0%, #8338ec 100%); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Anmelden</button>
+    <p id="adminErrorMsg" style="color: #e74c3c; text-align: center; margin-top: 1rem; display: none;">Falsches Passwort!</p>
+  </div>
+</div>
+
+<!-- Admin Panel Modal -->
+<div class="modal" id="adminPanelModal">
+  <div class="modal-content" style="max-width: 900px; max-height: 85vh; overflow-y: auto; padding: 1.5rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+      <h2 style="margin: 0; color: #1a0f2e; flex: 1; text-align: center;">🛍️ Produktverwaltung</h2>
+      <button onclick="closeAdminPanel()" style="background: #e74c3c; color: white; border: none; padding: 0.5rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 1.3rem; transition: all 0.3s;" onmouseover="this.style.background='#c0392b';" onmouseout="this.style.background='#e74c3c';">✕</button>
+    </div>
+    
+    <div style="margin-bottom: 1rem;">
+      <input type="text" id="adminProductSearch" placeholder="Produkt suchen..." style="width: 100%; padding: 0.8rem; border: 2px solid #ddd; border-radius: 4px; font-size: 1rem;">
+    </div>
+    
+    <div style="overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 4px; overflow: hidden;">
+        <thead>
+          <tr style="background: linear-gradient(135deg, #1a0f2e 0%, #2d1b4e 100%); color: white;">
+            <th style="padding: 1rem; text-align: left; font-weight: bold; border: none;">Produkt Name</th>
+            <th style="padding: 1rem; text-align: center; font-weight: bold; border: none;">Verfügbarkeit</th>
+          </tr>
+        </thead>
+        <tbody id="adminProductsList" style="background: white;">
+          <tr><td colspan="2" style="text-align: center; padding: 2rem; color: #999; border-bottom: 1px solid #eee;">⏳ Produkte werden geladen...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
